@@ -8,7 +8,7 @@ export class ApplyService {
   constructor(
     private readonly mailer: MailerService,
     private readonly storage: StorageService,
-  ) {}
+  ) { }
 
   async sendApplication(
     dto: ApplyDto,
@@ -16,20 +16,25 @@ export class ApplyService {
   ) {
     const links: { label: string; url: string }[] = [];
 
-    if (files.file_cv?.[0]) {
-      const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
-      links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
-    }
+    links.push({ label: 'CV', url: `https://postule.selys.app/uploads/${files.file_cv?.[0]?.filename}` });
+    links.push({ label: 'Video', url: `https://postule.selys.app/uploads/${files.file_video?.[0]?.filename}` });
 
-    if (files.file_video?.[0]) {
-      const { key, bucket } = await this.storage.uploadFile(
-        files.file_video[0],
-      );
-      links.push({
-        label: 'Vidéo',
-        url: await this.storage.getUrl(key, bucket),
-      });
-    }
+
+    // if (files.file_cv?.[0]) {
+    //   const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
+    //   links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
+    // }
+
+    // if (files.file_video?.[0]) {
+    //   const { key, bucket } = await this.storage.uploadFile(
+    //     files.file_video[0],
+    //   );
+    //   links.push({
+    //     label: 'Vidéo',
+    //     url: await this.storage.getUrl(key, bucket),
+    //   });
+    // }
+
 
     await this.mailer.sendMail({
       to: process.env.MAIL_TO ?? 'hi@selys-africa.com',
@@ -43,15 +48,14 @@ export class ApplyService {
         <hr>
         <h3>Lettre de motivation</h3>
         <p>${dto.coverLetter.replace(/\n/g, '<br>')}</p>
-        ${
-          links.length
-            ? `<hr><h3>Pièces jointes</h3><ul>${links
-                .map(
-                  (l) =>
-                    `<li><a href="${l.url}">${l.label}</a> (lien valable ${process.env.MINIO_PRESIGNED_URL_LIFETIME ?? 3600}s)</li>`,
-                )
-                .join('')}</ul>`
-            : ''
+        ${links.length
+          ? `<hr><h3>Pièces jointes</h3><ul>${links
+            .map(
+              (l) =>
+                `<li><a href="${l.url}">${l.label}</a> (lien valable ${process.env.MINIO_PRESIGNED_URL_LIFETIME ?? 3600}s)</li>`,
+            )
+            .join('')}</ul>`
+          : ''
         }
       `,
     });

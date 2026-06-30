@@ -15,15 +15,15 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule,);
 
   // Exclut explicitement les routes multipart des deux parsers
-  app.use((req, res, next) => {
-    if (isUploadRoute(req.path)) return next();
-    express.json({ limit: '50mb' })(req, res, next);
-  });
+  // app.use((req, res, next) => {
+  //   if (isUploadRoute(req.path)) return next();
+  //   express.json({ limit: '50mb' })(req, res, next);
+  // });
 
-  app.use((req, res, next) => {
-    if (isUploadRoute(req.path)) return next();
-    express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
-  });
+  // app.use((req, res, next) => {
+  //   if (isUploadRoute(req.path)) return next();
+  //   express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
+  // });
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));

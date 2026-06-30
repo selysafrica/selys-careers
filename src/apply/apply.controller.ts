@@ -23,8 +23,8 @@ export class ApplyController {
   @UseInterceptors(
     FileFieldsInterceptor(
       [
-        { name: 'file' },
-        // { name: 'file_video', maxCount: 1 }
+        { name: 'file_cv', maxCount: 1},
+        { name: 'file_video', maxCount: 1 }
       ],
       {
         storage: diskStorage({
@@ -34,7 +34,7 @@ export class ApplyController {
             cb(null, uniqueSuffix + extname(file.originalname));
           },
         }),
-        limits: { fileSize: 50 * 1024 * 1024 }, // ajuste selon besoin
+        // limits: { fileSize: 50 * 1024 * 1024 }, // ajuste selon besoin
       },
 
     ),
