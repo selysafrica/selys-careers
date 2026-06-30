@@ -10,9 +10,10 @@ import {
   ParseBoolPipe,
 } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { ApplyService } from './apply.service';
 import { ApplyDto } from './apply.dto';
+import { extname } from 'path';
 
 @Controller('api')
 export class ApplyController {
@@ -21,11 +22,21 @@ export class ApplyController {
   @Post('apply')
   @UseInterceptors(
     FileFieldsInterceptor(
-      [{ name: 'file_cv', },{ name: 'file_video', }],
+      [
+        { name: 'file' },
+        // { name: 'file_video', maxCount: 1 }
+      ],
       {
-        storage: memoryStorage(),
+        storage: diskStorage({
+          destination: './uploads', // Ensure this folder exists
+          filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+            cb(null, uniqueSuffix + extname(file.originalname));
+          },
+        }),
         limits: { fileSize: 50 * 1024 * 1024 }, // ajuste selon besoin
       },
+
     ),
   )
   // @UseInterceptors(FileInterceptor('files'))
