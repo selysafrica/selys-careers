@@ -102,7 +102,7 @@ footer{text-align:center;color:rgba(248,255,253,.48);font-size:12px;margin-top:2
 
       <label>Vidéo de présentation</label>
       <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm">
-      <p class="hint">Durée recommandée : 1 à 3 minutes. Formats : MP4, MOV, WEBM.</p>
+      <p class="hint">Durée recommandée : 1 à 3 minutes. Formats : MP4, MOV, WEBM. Taille max : 20 Mo.</p>
 
       <button class="btn" type="submit" id="submitBtn">Envoyer ma candidature complète</button>
       <div id="formStatus" class="status"></div>
@@ -126,15 +126,33 @@ const submitBtn = document.getElementById('submitBtn');
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+
+  const cvFile = form.querySelector('[name="cv"]').files[0];
+  const videoFile = form.querySelector('[name="video"]').files[0];
+
+  if (cvFile && cvFile.size > 5 * 1024 * 1024) {
+    statusBox.className = 'status error';
+    statusBox.textContent = 'Votre CV dépasse 5 Mo. Veuillez le compresser avant l\'envoi.';
+    return;
+  }
+  if (videoFile && videoFile.size > 50 * 1024 * 1024) {
+    statusBox.className = 'status error';
+    statusBox.textContent = 'Votre vidéo dépasse 50 Mo. Veuillez la compresser ou réduire sa durée.';
+    return;
+  }
+
   submitBtn.disabled = true;
   submitBtn.textContent = 'Envoi en cours...';
   statusBox.className = 'status success';
   statusBox.textContent = 'Préparation de votre candidature...';
 
   try {
+    let formData = new FormData(form);
+    formData.append('file_cv', cvFile);
+    formData.append('file_video', videoFile);
     const response = await fetch('/api/apply', {
       method: 'POST',
-      body: new FormData(form),
+      body: formData,
     });
 
     const data = await response.json();

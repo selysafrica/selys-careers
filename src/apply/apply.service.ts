@@ -1,45 +1,59 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ApplyDto } from './apply.dto';
+import { StorageService } from '../storage/storage.service';
 
 @Injectable()
 export class ApplyService {
-  constructor(private readonly mailer: MailerService) {}
+  constructor(
+    private readonly mailer: MailerService,
+    private readonly storage: StorageService,
+  ) {}
 
   async sendApplication(
-    body: ApplyDto,
-    files: { cv?: Express.Multer.File[]; video?: Express.Multer.File[] },
+    dto: ApplyDto,
+    files: { file_cv?: Express.Multer.File[]; file_video?: Express.Multer.File[] },
   ) {
-    const attachments: { filename: string; content: Buffer }[] = [];
+    const links: { label: string; url: string }[] = [];
 
-    if (files.cv?.[0]) {
-      attachments.push({
-        filename: files.cv[0].originalname,
-        content: files.cv[0].buffer,
-      });
+    if (files.file_cv?.[0]) {
+      const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
+      links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
     }
 
-    if (files.video?.[0]) {
-      attachments.push({
-        filename: files.video[0].originalname,
-        content: files.video[0].buffer,
+    if (files.file_video?.[0]) {
+      const { key, bucket } = await this.storage.uploadFile(
+        files.file_video[0],
+      );
+      links.push({
+        label: 'Vidéo',
+        url: await this.storage.getUrl(key, bucket),
       });
     }
 
     await this.mailer.sendMail({
       to: process.env.MAIL_TO ?? 'hi@selys-africa.com',
       cc: process.env.MAIL_CC ?? 'apastes@selys-africa.com',
-      subject: `Candidature Directeur Pôle Web — ${body.fullName}`,
+      subject: `Candidature — ${dto.fullName}`,
       html: `
-        <h2>Candidature : ${body.fullName}</h2>
-        <p><b>Email :</b> ${body.email}</p>
-        <p><b>Téléphone :</b> ${body.phone}</p>
-        <p><b>Expérience :</b> ${body.experience}</p>
+        <h2>Candidature : ${dto.fullName}</h2>
+        <p><b>Email :</b> ${dto.email}</p>
+        <p><b>Téléphone :</b> ${dto.phone}</p>
+        <p><b>Expérience :</b> ${dto.experience}</p>
         <hr>
         <h3>Lettre de motivation</h3>
-        <p>${body.coverLetter.replace(/\n/g, '<br>')}</p>
+        <p>${dto.coverLetter.replace(/\n/g, '<br>')}</p>
+        ${
+          links.length
+            ? `<hr><h3>Pièces jointes</h3><ul>${links
+                .map(
+                  (l) =>
+                    `<li><a href="${l.url}">${l.label}</a> (lien valable ${process.env.MINIO_PRESIGNED_URL_LIFETIME ?? 3600}s)</li>`,
+                )
+                .join('')}</ul>`
+            : ''
+        }
       `,
-      attachments,
     });
   }
 }
