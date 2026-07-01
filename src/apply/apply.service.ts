@@ -171,6 +171,7 @@ export class ApplyService {
         html,
       });
     } catch (error) {
+      console.error(`Erreur lors de l'envoi de la candidature: ${error instanceof Error ? error.message : error}`);
       throw error;
     }
   }
