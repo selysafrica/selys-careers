@@ -26,16 +26,10 @@ export class ApplyController {
         { name: 'file_cv', maxCount: 1},
         { name: 'file_video', maxCount: 1 }
       ],
-      // {
-      //   storage: diskStorage({
-      //     destination: './uploads', // Ensure this folder exists
-      //     filename: (req, file, cb) => {
-      //       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      //       cb(null, uniqueSuffix + extname(file.originalname));
-      //     },
-      //   }),
-      //   // limits: { fileSize: 50 * 1024 * 1024 }, // ajuste selon besoin
-      // },
+      {
+        storage: memoryStorage(),
+        limits: { fileSize: 50 * 1024 * 1024 }, // ajuste selon besoin
+      },
     ),
   )
   // @UseInterceptors(FileInterceptor('files'))
