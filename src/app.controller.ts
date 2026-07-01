@@ -7,4 +7,10 @@ export class AppController {
   index() {
     return {};
   }
+
+  @Get('response')
+  @Render('merci')
+  merci() {
+    return {};
+  }
 }

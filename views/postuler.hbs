@@ -97,11 +97,11 @@ footer{text-align:center;color:rgba(248,255,253,.48);font-size:12px;margin-top:2
       <textarea name="coverLetter" placeholder="Présentez votre parcours, votre vision du Web Management et ce que vous pouvez construire pour SELYS AFRICA." required></textarea>
 
       <label>CV</label>
-      <input type="file" name="cv" accept=".pdf,.doc,.docx" required>
+      <input type="file" name="file_cv" accept=".pdf,.doc,.docx" required>
       <p class="hint">Formats acceptés : PDF, DOC, DOCX.</p>
 
       <label>Vidéo de présentation</label>
-      <input type="file" name="video" accept="video/mp4,video/quicktime,video/webm">
+      <input type="file" name="file_video" accept="video/mp4,video/quicktime,video/webm">
       <p class="hint">Durée recommandée : 1 à 3 minutes. Formats : MP4, MOV, WEBM. Taille max : 20 Mo.</p>
 
       <button class="btn" type="submit" id="submitBtn">Envoyer ma candidature complète</button>
@@ -127,8 +127,8 @@ const submitBtn = document.getElementById('submitBtn');
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const cvFile = form.querySelector('[name="cv"]').files[0];
-  const videoFile = form.querySelector('[name="video"]').files[0];
+  const cvFile = form.querySelector('[name="file_cv"]').files[0];
+  const videoFile = form.querySelector('[name="file_video"]').files[0];
 
   if (cvFile && cvFile.size > 5 * 1024 * 1024) {
     statusBox.className = 'status error';
@@ -148,8 +148,6 @@ form.addEventListener('submit', async (event) => {
 
   try {
     let formData = new FormData(form);
-    formData.append('file_cv', cvFile);
-    formData.append('file_video', videoFile);
     const response = await fetch('/api/apply', {
       method: 'POST',
       body: formData,
@@ -159,9 +157,7 @@ form.addEventListener('submit', async (event) => {
 
     if (!response.ok) throw new Error(data.message || 'Erreur serveur');
 
-    statusBox.className = 'status success';
-    statusBox.textContent = 'Candidature envoyée avec succès. Merci pour votre intérêt pour SELYS AFRICA.';
-    form.reset();
+    window.location.href = '/response';
   } catch (err) {
     statusBox.className = 'status error';
     statusBox.textContent = err.message || 'Erreur lors de l\'envoi. Veuillez réessayer.';

@@ -8,6 +8,7 @@ export class ApplyService {
   constructor(
     private readonly mailer: MailerService,
     private readonly storage: StorageService,
+
   ) { }
 
   async sendApplication(
