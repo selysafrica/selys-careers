@@ -14,31 +14,40 @@ export class ApplyService {
     dto: ApplyDto,
     files: { file_cv?: Express.Multer.File[]; file_video?: Express.Multer.File[] },
   ) {
-    const links: { label: string; url: string }[] = [];
 
-    if (files.file_cv?.[0]) {
-      const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
-      links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
-    }
+    this.run(dto, files);
 
-    if (files.file_video?.[0]) {
-      const { key, bucket } = await this.storage.uploadFile(
-        files.file_video[0],
-      );
-      links.push({
-        label: 'Vidéo',
-        url: await this.storage.getUrl(key, bucket),
-      });
-    }
+    return { success: true, message: 'Candidature envoyée avec succès.' };
+
+  }
+
+  async run(dto: ApplyDto, files: { file_cv?: Express.Multer.File[]; file_video?: Express.Multer.File[] }) {
+    try {
+      const links: { label: string; url: string }[] = [];
+
+      if (files.file_cv?.[0]) {
+        const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
+        links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
+      }
+
+      if (files.file_video?.[0]) {
+        const { key, bucket } = await this.storage.uploadFile(
+          files.file_video[0],
+        );
+        links.push({
+          label: 'Vidéo',
+          url: await this.storage.getUrl(key, bucket),
+        });
+      }
 
 
-    const cvLink = links.find((l) => l.label === 'CV');
-    const videoLink = links.find((l) => l.label === 'Vidéo');
-    // const lifetime = Math.round(
-    //   Number(process.env.MINIO_PRESIGNED_URL_LIFETIME ?? 3600) / 3600,
-    // );
+      const cvLink = links.find((l) => l.label === 'CV');
+      const videoLink = links.find((l) => l.label === 'Vidéo');
+      // const lifetime = Math.round(
+      //   Number(process.env.MINIO_PRESIGNED_URL_LIFETIME ?? 3600) / 3600,
+      // );
 
-    const html = `<!DOCTYPE html>
+      const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -108,35 +117,32 @@ export class ApplyService {
               </div>
 
               <!-- PIÈCES JOINTES -->
-              ${
-                links.length
-                  ? `<h2 style="margin:0 0 14px;font-size:15px;font-weight:800;color:#031314;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #54ddd4;padding-bottom:8px">Pièces jointes</h2>
+              ${links.length
+          ? `<h2 style="margin:0 0 14px;font-size:15px;font-weight:800;color:#031314;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #54ddd4;padding-bottom:8px">Pièces jointes</h2>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">
-                ${
-                  cvLink
-                    ? `<tr>
+                ${cvLink
+            ? `<tr>
                   <td style="padding:8px 0">
                     <a href="${cvLink.url}" style="display:inline-block;background:linear-gradient(135deg,#0f7d84,#54ddd4);color:#fff;font-size:13px;font-weight:800;text-decoration:none;padding:12px 24px;border-radius:10px">
                       Télécharger le CV
                     </a>
                   </td>
                 </tr>`
-                    : ''
-                }
-                ${
-                  videoLink
-                    ? `<tr>
+            : ''
+          }
+                ${videoLink
+            ? `<tr>
                   <td style="padding:8px 0">
                     <a href="${videoLink.url}" style="display:inline-block;background:linear-gradient(135deg,#031314,#0f7d84);color:#fff;font-size:13px;font-weight:800;text-decoration:none;padding:12px 24px;border-radius:10px">
                       Visionner la vidéo
                     </a>
                   </td>
                 </tr>`
-                    : ''
-                }
+            : ''
+          }
               </table>`
-                  : `<p style="font-size:13px;color:#999;font-style:italic">Aucune pièce jointe fournie.</p>`
-              }
+          : `<p style="font-size:13px;color:#999;font-style:italic">Aucune pièce jointe fournie.</p>`
+        }
 
             </td>
           </tr>
@@ -158,7 +164,6 @@ export class ApplyService {
 </body>
 </html>`;
 
-    try {
       await this.mailer.sendMail({
         to: process.env.MAIL_TO ?? 'hi@selys-africa.com',
         cc: process.env.MAIL_CC ?? 'apastes@selys-africa.com',
