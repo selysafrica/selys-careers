@@ -16,27 +16,24 @@ export class ApplyService {
   ) {
     const links: { label: string; url: string }[] = [];
 
-    links.push({ label: 'CV', url: `https://postule.selys.app/uploads/${files.file_cv?.[0]?.filename}` });
-    links.push({ label: 'Video', url: `https://postule.selys.app/uploads/${files.file_video?.[0]?.filename}` });
+    if (files.file_cv?.[0]) {
+      const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
+      links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
+    }
+
+    if (files.file_video?.[0]) {
+      const { key, bucket } = await this.storage.uploadFile(
+        files.file_video[0],
+      );
+      links.push({
+        label: 'Vidéo',
+        url: await this.storage.getUrl(key, bucket),
+      });
+    }
 
 
-    // if (files.file_cv?.[0]) {
-    //   const { key, bucket } = await this.storage.uploadFile(files.file_cv[0]);
-    //   links.push({ label: 'CV', url: await this.storage.getUrl(key, bucket) });
-    // }
-
-    // if (files.file_video?.[0]) {
-    //   const { key, bucket } = await this.storage.uploadFile(
-    //     files.file_video[0],
-    //   );
-    //   links.push({
-    //     label: 'Vidéo',
-    //     url: await this.storage.getUrl(key, bucket),
-    //   });
-    // }
-
-
-    await this.mailer.sendMail({
+   try {
+     await this.mailer.sendMail({
       to: process.env.MAIL_TO ?? 'hi@selys-africa.com',
       cc: process.env.MAIL_CC ?? 'apastes@selys-africa.com',
       subject: `Candidature — ${dto.fullName}`,
@@ -59,5 +56,8 @@ export class ApplyService {
         }
       `,
     });
+   } catch (error) {
+    throw error
+   }
   }
 }

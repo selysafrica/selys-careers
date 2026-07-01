@@ -16,11 +16,16 @@ import {
 export class MinioStorageAdapter implements StorageAdapter {
   private readonly client: S3Client;
   private readonly privateBucket: string;
+  private readonly publicBucket: string;
   private readonly presignedUrlLifetime: number;
 
   constructor(private readonly config: ConfigService) {
     this.privateBucket = this.config.get<string>(
       'MINIO_PRIVATE_BUCKET_NAME',
+    )!;
+
+    this.publicBucket = this.config.get<string>(
+      'MINIO_PUBLIC_BUCKET_NAME',
     )!;
     this.presignedUrlLifetime = this.config.get<number>(
       'MINIO_PRESIGNED_URL_LIFETIME',
@@ -29,7 +34,7 @@ export class MinioStorageAdapter implements StorageAdapter {
 
     this.client = new S3Client({
       region: this.config.get('MINIO_REGION', 'us-east-1'),
-      endpoint: this.config.get('MINIO_PRIVATE_BUCKET_ENDPOINT'),
+      endpoint: this.config.get('MINIO_PUBLIC_BUCKET_ENDPOINT'),
       forcePathStyle: true,
       credentials: {
         accessKeyId: this.config.get('MINIO_ACCESS_KEY_ID')!,
@@ -39,7 +44,7 @@ export class MinioStorageAdapter implements StorageAdapter {
   }
 
   private generateKey(file: Express.Multer.File): string {
-    return `applications/${randomUUID()}-${file.originalname}`;
+    return `candidatures/${randomUUID()}-${file.originalname}`;
   }
 
   async uploadFile(file: Express.Multer.File): Promise<StorageUploadResult> {
@@ -48,7 +53,7 @@ export class MinioStorageAdapter implements StorageAdapter {
     try {
       await this.client.send(
         new PutObjectCommand({
-          Bucket: this.privateBucket,
+          Bucket: this.publicBucket,
           Key: key,
           Body: file.buffer,
           ContentLength: file.size,
@@ -57,7 +62,7 @@ export class MinioStorageAdapter implements StorageAdapter {
         }),
       );
 
-      return { key, bucket: this.privateBucket };
+      return { key, bucket: this.publicBucket };
     } catch (error) {
       throw new InternalServerErrorException(
         `Erreur lors de l'upload du fichier`,
@@ -65,7 +70,7 @@ export class MinioStorageAdapter implements StorageAdapter {
     }
   }
 
-  async getUrl(key: string, bucket = this.privateBucket): Promise<string> {
+  async getUrl(key: string, bucket = this.publicBucket): Promise<string> {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     return getSignedUrl(this.client, command, {
       expiresIn: this.presignedUrlLifetime,
