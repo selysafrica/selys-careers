@@ -13,7 +13,7 @@ export class ApplyService {
     private readonly storage: StorageService,
     @InjectRepository(Application)
     private readonly applicationRepo: Repository<Application>,
-  ) {}
+  ) { }
 
   async sendApplication(
     dto: ApplyDto,
@@ -36,10 +36,12 @@ export class ApplyService {
         coverLetter: dto.coverLetter,
       });
 
+      let today = new Date().toISOString();
+
       if (files.file_cv?.[0]) {
         const fileData: FileData = {
           file: files.file_cv[0],
-          key: `${new Date().toISOString()} - ${dto.fullName}/cv/${files.file_cv[0].originalname}`,
+          key: `${today} - ${dto.fullName}/cv/${files.file_cv[0].originalname}`,
         };
         const { key, bucket } = await this.storage.uploadFile(fileData);
         application.cvKey = key;
@@ -49,7 +51,7 @@ export class ApplyService {
       if (files.file_video?.[0]) {
         const fileData: FileData = {
           file: files.file_video[0],
-          key: `${new Date().toISOString()} - ${dto.fullName}/video/${files.file_video[0].originalname}`,
+          key: `${today} - ${dto.fullName}/video/${files.file_video[0].originalname}`,
         };
         const { key, bucket } = await this.storage.uploadFile(fileData);
         application.videoKey = key;
@@ -126,13 +128,13 @@ export class ApplyService {
                 ${dto.coverLetter.replace(/\n/g, '<br>')}
               </div>
               ${cvLink || videoLink
-                ? `<h2 style="margin:0 0 14px;font-size:15px;font-weight:800;color:#031314;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #54ddd4;padding-bottom:8px">Pièces jointes</h2>
+          ? `<h2 style="margin:0 0 14px;font-size:15px;font-weight:800;color:#031314;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #54ddd4;padding-bottom:8px">Pièces jointes</h2>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">
                 ${cvLink ? `<tr><td style="padding:8px 0"><a href="${cvLink.url}" style="display:inline-block;background:linear-gradient(135deg,#0f7d84,#54ddd4);color:#fff;font-size:13px;font-weight:800;text-decoration:none;padding:12px 24px;border-radius:10px">Télécharger le CV</a></td></tr>` : ''}
                 ${videoLink ? `<tr><td style="padding:8px 0"><a href="${videoLink.url}" style="display:inline-block;background:linear-gradient(135deg,#031314,#0f7d84);color:#fff;font-size:13px;font-weight:800;text-decoration:none;padding:12px 24px;border-radius:10px">Visionner la vidéo</a></td></tr>` : ''}
               </table>`
-                : `<p style="font-size:13px;color:#999;font-style:italic">Aucune pièce jointe fournie.</p>`
-              }
+          : `<p style="font-size:13px;color:#999;font-style:italic">Aucune pièce jointe fournie.</p>`
+        }
             </td>
           </tr>
           <tr>
