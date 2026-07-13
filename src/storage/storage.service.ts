@@ -2,9 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StorageAdapter, StorageUploadResult } from './storage-adapter.interface';
 import { MinioStorageAdapter } from './adapters/minio-storage.adapter';
-import { LocalStorageAdapter } from './adapters/local-storage.adapter';
 
 export type StorageDriver = 'minio' | 'local';
+
+export class FileData {
+  file: Express.Multer.File;
+  key: string;
+}
 
 @Injectable()
 export class StorageService implements StorageAdapter {
@@ -13,14 +17,13 @@ export class StorageService implements StorageAdapter {
   constructor(
     config: ConfigService,
     minioAdapter: MinioStorageAdapter,
-    localAdapter: LocalStorageAdapter,
   ) {
     const driver = config.get<StorageDriver>('STORAGE_DRIVER', 'minio');
-    this.adapter = driver === 'local' ? localAdapter : minioAdapter;
+    this.adapter = minioAdapter;
   }
 
-  uploadFile(file: Express.Multer.File): Promise<StorageUploadResult> {
-    return this.adapter.uploadFile(file);
+  uploadFile(fileData: FileData): Promise<StorageUploadResult> {
+    return this.adapter.uploadFile(fileData);
   }
 
   getUrl(key: string, bucket: string): Promise<string> {

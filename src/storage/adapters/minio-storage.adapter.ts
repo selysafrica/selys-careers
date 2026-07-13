@@ -11,6 +11,7 @@ import {
   StorageAdapter,
   StorageUploadResult,
 } from '../storage-adapter.interface';
+import { FileData } from '../storage.service';
 
 @Injectable()
 export class MinioStorageAdapter implements StorageAdapter {
@@ -43,24 +44,24 @@ export class MinioStorageAdapter implements StorageAdapter {
     });
   }
 
-  private generateKey(file: Express.Multer.File): string {
-    return `candidatures/${file.originalname}`;
+  private generateKey(fileData: FileData): string {
+    return `candidatures/${fileData.key}`;
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<StorageUploadResult> {
+  async uploadFile(fileData: FileData): Promise<StorageUploadResult> {
     let filename = `${randomUUID()}-${new Date().getTime()}`;
-    file.originalname = filename;
-    const key = this.generateKey(file);
+    fileData.file.originalname = filename;
+    const key = this.generateKey(fileData);
 
     try {
       await this.client.send(
         new PutObjectCommand({
           Bucket: this.publicBucket,
           Key: key,
-          Body: file.buffer,
-          ContentLength: file.size,
-          ContentType: file.mimetype,
-          Metadata: { originalName: file.originalname },
+          Body: fileData.file.buffer,
+          ContentLength: fileData.file.size,
+          ContentType: fileData.file.mimetype,
+          Metadata: { originalName: fileData.file.originalname },
         }),
       );
 
@@ -73,9 +74,7 @@ export class MinioStorageAdapter implements StorageAdapter {
   }
 
   async getUrl(key: string, bucket = this.publicBucket): Promise<string> {
-    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-    return getSignedUrl(this.client, command, {
-      // expiresIn: this.presignedUrlLifetime,
-    });
+    const endpoint = this.config.get('MINIO_PUBLIC_BUCKET_ENDPOINT')!;
+    return `${endpoint.replace(/\/$/, '')}/${bucket}/${key}`;
   }
 }

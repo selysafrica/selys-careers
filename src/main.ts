@@ -4,6 +4,8 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 import { AbortExceptionFilter } from './abort-exception.filter';
 import * as express from 'express';
+import session = require('express-session');
+import { mkdirSync } from 'fs';
 
 const UPLOAD_ROUTES = ['/api/apply', '/api/mixed', '/api/many', '/api/single'];
 
@@ -12,9 +14,19 @@ function isUploadRoute(path: string): boolean {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule,);
+  mkdirSync('data', { recursive: true });
 
-  // Exclut explicitement les routes multipart des deux parsers
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'selys-careers-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      cookie: { maxAge: 24 * 60 * 60 * 1000 },
+    }),
+  );
+
   app.use((req, res, next) => {
     if (isUploadRoute(req.path)) return next();
     express.json({ limit: '50mb' })(req, res, next);
