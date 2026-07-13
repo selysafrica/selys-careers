@@ -53,6 +53,7 @@ export class ApplyService {
           file: files.file_video[0],
           key: `${today} - ${dto.fullName}/video/${files.file_video[0].originalname}`,
         };
+
         const { key, bucket } = await this.storage.uploadFile(fileData);
         application.videoKey = key;
         application.videoUrl = await this.storage.getUrl(key, bucket);

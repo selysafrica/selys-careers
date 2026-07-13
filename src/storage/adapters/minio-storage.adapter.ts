@@ -75,6 +75,10 @@ export class MinioStorageAdapter implements StorageAdapter {
 
   async getUrl(key: string, bucket = this.publicBucket): Promise<string> {
     const endpoint = this.config.get('MINIO_PUBLIC_BUCKET_ENDPOINT')!;
-    return `${endpoint.replace(/\/$/, '')}/${bucket}/${key}`;
+    const encodedKey = key
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `${endpoint.replace(/\/$/, '')}/${bucket}/${encodedKey}`;
   }
 }
