@@ -14,8 +14,9 @@ import { User } from './entities/user.entity';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: 'data/selys-careers.db',
+      type: 'sqljs',
+      location: 'data/selys-careers.db',
+      autoSave: true,
       entities: [Application, User],
       synchronize: true,
     }),
